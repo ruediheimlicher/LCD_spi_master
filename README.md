@@ -1,1 +1,1 @@
-# Laminator
+# LCD-Ansteuerung mit SPI
