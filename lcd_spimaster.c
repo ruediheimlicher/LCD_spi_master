@@ -337,6 +337,7 @@ void main (void)
    sollwert = readKanal(1)>>2;
    sei();
    uint8_t i=0;
+    uint8_t l=sollwert%15;
 	while (1)
    {
       // PORTD |= (1<<0);
@@ -352,39 +353,109 @@ void main (void)
          //delay_ms(10);
          //PORTD ^= (1<<4);
          loopcount1++;
-         if ((loopcount1 >4) )
+         if ((loopcount1 >8) )
          {
+            //sollwert = readKanal(1)>>2;
+
             loopcount1=0;
             lcd_gotoxy(12,0);
-            set_LCD(0x0D);// CR
+            set_LCD_cmd(0x0D);// CR
             _delay_us(2);
-            set_LCD(LCD_GOTOXY);
+            
+            
+            // set pos
+            /*
+            set_LCD_cmd(LCD_GOTOXY);
             _delay_us(2);
             lcd_gotoxy(0,1);
             uint8_t line = 1;
-            uint8_t col = 8;
+            uint8_t col = 0x05;
             
             // pos auf LCD
-            int goto_pos = (col <<3) | (line & 0x07); // 5 bit col, 3 bit line
+            uint8_t goto_pos = ((col & 0x1F) <<3) | (line & 0x07); // 5 bit col, 3 bit line
             lcd_puthex(goto_pos);
             lcd_putc(' ');
-            set_LCD(goto_pos);
+            char buffer[8]={};
             
-            
-            for (i=0;i<8;i++)
+            itoa(goto_pos, buffer,16);
+            lcd_puthex(buffer[0]);
+            lcd_putc(' ');
+            lcd_puthex(buffer[1]);
+            lcd_putc(' ');
+            set_LCD_hex(goto_pos);
+            */
+            lcd_gotoxy(0,1);
+            for (i=0;i<1;i++)
             {
                
-               char c ='A'+ (blinkcount++ & 0x0F);
-               //lcd_putc(c);
+               char c ='A'+ ((blinkcount + i) & 0x0F);
+               lcd_putc(c);
                //
-               set_LCD(LCD_PUTC);
-               //_delay_us(2);
-               set_LCD(c);
+               set_LCD_cmd(LCD_PUTC);
+               _delay_us(100);
+               char buffer[8]={};
+               itoa(c, buffer,16);
+               lcd_putc(' ');
+               lcd_puthex(buffer[0]);
+               set_LCD_char(buffer[0]);
+               _delay_us(100);
+               set_LCD_cmd(LCD_PUTC);
+               _delay_us(100);
+
+               set_LCD_char(buffer[1]);
+               lcd_putc(' ');
+               lcd_puthex(buffer[1]);
             }
             //_delay_us(2);
-            set_LCD(0);
             
-            //blinkcount++;
+            
+            set_LCD_cmd(0);
+            _delay_us(50);
+   
+            /*
+    //        set_LCD(0x0D);// CR
+            _delay_us(2);
+            line = 2;
+            col = 1;
+            
+            // pos auf LCD
+            goto_pos = (col <<3) | (line & 0x07); // 5 bit col, 3 bit line
+            lcd_gotoxy(14,2);
+            lcd_puthex(goto_pos);
+            //lcd_putc(' ');
+            set_LCD(goto_pos);
+            _delay_us(20);
+            char c =('0'+ (blinkcount & 0x01) & 0x0F);
+            set_LCD(LCD_PUTC);
+            _delay_us(100);
+            set_LCD(c);
+            _delay_us(20);
+//            set_LCD(0);
+            _delay_us(50);
+             */
+            /*
+            set_LCD(0x0D);// CR
+            _delay_us(2);
+            line = 2;
+            col = 14;
+            
+            // pos auf LCD
+            goto_pos = (col <<3) | (line & 0x07); // 5 bit col, 3 bit line
+            lcd_gotoxy(col,line);
+            lcd_puthex(goto_pos);
+            //lcd_putc(' ');
+            set_LCD(goto_pos);
+            _delay_us(2);
+            for (i=0;i<1;i++)
+            {
+               char c =('0'+ i) & 0x0F;
+               set_LCD(LCD_PUTC);
+               _delay_us(100);
+               set_LCD(c);
+            }
+            */
+            
+            blinkcount++;
             //delay_ms(2);
             //lcd_gotoxy(12,0);
             //lcd_putint(blinkcount);
@@ -412,197 +483,13 @@ void main (void)
          OSZIHI;
       }
       */
-      if (masterstatus & (1<<PWM_ADC)) // soll- und ist-werte lesen, PI aktualisieren
-      {
-   //      OSZIHI;
-         masterstatus &= ~(1<<PWM_ADC);
-         sollwert = readKanal(1)>>2;
-         lcd_gotoxy(0,2);
-         lcd_putc('s');
-         lcd_putint12(sollwert);
-         
-         lcd_gotoxy(8,2);
-         lcd_putc('i');
-         istwert = readKanal(2)>>2;
-         lcd_putint12(istwert);
- //     }
-
       
-         
-#pragma mark PID
-         /*
-          e = w - x;                       //Vergleich
-          esum = esum + e;                 //Integration I-Anteil
-          if (esum < -400) {esum = -400;}  //Begrenzung I-Anteil
-          if (esum > 400) {esum = 400;}
-          y = Kp*e + Ki*Ta*esum;           //Reglergleichung
-          if (y < 0) {y = 0;}              //Begrenzung Stellgrš§e
-          if (y > 255) {y = 255;}
-          PWM = y;                         //†bergabe Stellgrš§e
-          
-          
-          int8_t fehler=0;
-          int16_t fehlersumme=0;
-          FŸhrungsgrš§e (Sollwert) w
-          Vorgegebener Wert, auf dem die Regelgrš§e durch die Regelung gehalten werden soll. Sie ist eine von der Regelung nicht beeinflusste Grš§e und wird von au§en zugefŸhrt.
-          Regelgrš§e (Istwert) x
-          */
-         char buffer[16];
-         fehler = sollwert - istwert;
-         lcd_gotoxy(0,3);
-         lcd_putc('f');
-         if (fehler>=0)
-         {
-         //   lcd_putc(' '); // Platz des Minuszeichens
-         }
-         if (fehler < 10)
-         {
-         //   lcd_putc(' ');
-         }
-         //itoa(fehler,buffer,10);
-         r_itoa8(fehler,buffer);
-         lcd_puts(buffer);
-         lcd_putc(' ');
-         /*
-         lcd_gotoxy(0,1);
-         if (fehler<0)
-         {
-            lcd_putint12(fehler * (-1));
-         }
-         else
-         {
-         lcd_putint12(fehler);
-         }
-        // lcd_putc(' ');
-         */
-         
-         fehlersumme += fehler;
-         if (fehlersumme < -20)
-         {
-            fehlersumme = -20;
-         }
-         if (fehlersumme > 20)
-         {
-            fehlersumme = 20;
-         }
-         
-         
-         
-         itoa(fehlersumme,buffer,10);
-         //r_itoa16(fehlersumme,buffer);
-
-         lcd_gotoxy(6,3);
-         lcd_putc('f');
-         lcd_putc('s');
-         lcd_gotoxy(9,3);
-         lcd_puts("    ");
-         lcd_gotoxy(9,3);
-
-         if (fehlersumme>=0)
-         {
-            lcd_putc(' '); // Platz des Minuszeichens
-         }
-          lcd_puts(buffer);
-
-         stellwert = K_PROP * fehler + K_INT_DIV_TIME * fehlersumme +   ((fehler-lastfehler) >> K_DIFF_TIME);
-         lastfehler = fehler;
-         if (stellwert < 0)
-         {
-            stellwert = 0;
-         }
-         if (stellwert > 255)
-         {
-            stellwert = 255;
-         }
-         
-         lcd_gotoxy(14,3);
-         
-         
-         lcd_putc('s');lcd_putc(' ');
-         lcd_putint(stellwert);
-         
-         lcd_gotoxy(19,2);
-         if (blinkcount%2)
-         {
-              lcd_putc('*');
-         }
-         else
-         {
-             lcd_putc(' ');
-         }
-        
-      
-      }
       
       
       /**	Ende Startroutinen	***********************/
       
       
       
-      
-      if (!(PINB & (1<<PB0))) // Taste 0
-      {
-         //lcd_gotoxy(12,1);
-         //lcd_puts("P0 Down\0");
-         
-         if (! (Tastenmasterstatus & (1<<PB0))) //Taste 0 war nich nicht gedrueckt
-         {
-            //RingD2(5);
-            Tastenmasterstatus |= (1<<PB0);
-            Tastencount=0;
-            //lcd_gotoxy(0,1);
-            //lcd_puts("P0 \0");
-            //lcd_putint(Tastenmasterstatus);
-            //delay_ms(800);
-         }
-         else
-         {
-            
-            
-            Tastencount ++;
-            //lcd_gotoxy(7,1);
-            //lcd_puts("TC \0");
-            //lcd_putint(Tastencount);
-            
-            if (Tastencount >= Tastenprellen)
-            {
-            }
-         }//else
-         
-      }	// Taste 0
-      
-      
-      if (!(PINB & (1<<PB1))) // Taste 1
-      {
-         //lcd_gotoxy(12,1);
-         //lcd_puts("P1 Down\0");
-         
-         if (! (Tastenmasterstatus & (1<<PB1))) //Taste 1 war nicht nicht gedrueckt
-         {
-            Tastenmasterstatus |= (1<<PB1);
-            Tastencount=0;
-            //lcd_gotoxy(3,1);
-            //lcd_puts("P1 \0");
-            //lcd_putint(Servoimpulsdauer);
-            //delay_ms(800);
-            
-         }
-         else
-         {
-            //lcd_gotoxy(3,1);
-            //lcd_puts("       \0");
-            
-            Tastencount ++;
-            if (Tastencount >= Tastenprellen)
-            {
-               
-               
-               Tastencount=0;
-               Tastenmasterstatus &= ~(1<<PB1);
-            }
-         }//	else
-         
-      } // Taste 1
       
       /* ******************** */
       //		initADC(TASTATURPIN);

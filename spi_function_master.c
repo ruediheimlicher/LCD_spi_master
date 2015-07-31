@@ -23,7 +23,7 @@ volatile uint8_t			spistatus=0;
 #define TEENSY_RECV  6
 #define WHILEMAX 0xFFFF // Wartezeit in while-Schleife : 5 ms
 
-#define SPI_DELAY 5
+#define SPI_DELAY 30
 
 //http://www.ermicro.com/blog/?p=1050
 // MCP23S17 Registers Definition for BANK=0 (default)
@@ -267,7 +267,7 @@ uint8_t  get_SR(uint8_t outData)
    
 }
 
-uint8_t set_LCD(uint8_t outData)
+uint8_t set_LCD_cmd(uint8_t outData) // zahl < 0x21
 {
    //OSZITOG;
    LCD_SS_LO;
@@ -283,9 +283,79 @@ uint8_t set_LCD(uint8_t outData)
    //SPCR0 &= ~(1<<CPOL0);
    //uint8_t in = SPDR0;
    _delay_us(SPI_DELAY);
+   
    LCD_SS_HI;
-   return SPDR0;
+   return SPDR;
 
+   
+}
+uint8_t set_LCD_char(uint8_t outData) // zahl < 0x21
+{
+   //OSZITOG;
+   LCD_SS_LO;
+   _delay_us(SPI_DELAY);
+   // _delay_ms(2);
+   SPDR = outData;
+   spiwaitcounter=0;
+   while(!(SPSR & (1<<SPIF)) )//&& spiwaitcounter < WHILEMAX)
+   {
+      spiwaitcounter++;
+   }
+   
+   //SPCR0 &= ~(1<<CPOL0);
+   //uint8_t in = SPDR0;
+   _delay_us(SPI_DELAY);
+   
+   LCD_SS_HI;
+   return SPDR;
+   
+   
+}
+
+
+uint8_t set_LCD_hex(uint8_t outData) //2 byte char
+{
+   //OSZITOG;
+   char buffer[8]={};
+   itoa(outData, buffer,16);
+   //r_itoa16(temp,buffer);
+   LCD_SS_LO;
+   _delay_us(SPI_DELAY);
+   // _delay_ms(2);
+   SPDR = buffer[1];
+   spiwaitcounter=0;
+   while(!(SPSR & (1<<SPIF)) )//&& spiwaitcounter < WHILEMAX)
+   {
+      spiwaitcounter++;
+   }
+   
+   //SPCR0 &= ~(1<<CPOL0);
+   //uint8_t in = SPDR0;
+   _delay_us(SPI_DELAY);
+   
+   LCD_SS_HI;
+   _delay_us(SPI_DELAY);
+   uint8_t dummy = SPDR;
+   _delay_ms(20);
+   LCD_SS_LO;
+   _delay_us(SPI_DELAY);
+   
+   SPDR = buffer[0];
+   spiwaitcounter=0;
+   while(!(SPSR & (1<<SPIF)) )//&& spiwaitcounter < WHILEMAX)
+   {
+      spiwaitcounter++;
+   }
+   
+   //SPCR0 &= ~(1<<CPOL0);
+   //uint8_t in = SPDR0;
+   _delay_us(SPI_DELAY);
+   
+   LCD_SS_HI;
+   
+   
+   return SPDR;
+   
    
 }
 
