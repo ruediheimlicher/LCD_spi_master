@@ -285,10 +285,34 @@ uint8_t set_LCD(uint8_t outData)
    _delay_us(SPI_DELAY);
    LCD_SS_HI;
    return SPDR0;
+}
 
+void set_LCD_data(uint8_t outData)
+{
+   //OSZITOG;
+   
+    // http://stackoverflow.com/questions/4085612/converting-an-int-to-a-2-byte-hex-value-in-c
+   //char array[2]={};
+   //array[0] = outData >> 8;
+   //array[1] = outData & 0xff;
+   
+   char buffer[5]={};
+   itoa(outData, buffer,16);
+
+   set_LCD(buffer[0]);
+   _delay_us(SPI_SEND_DELAY);
+   set_LCD(buffer[1]);
+   _delay_us(SPI_SEND_DELAY);
    
 }
 
+void set_LCD_task(uint8_t outTask)
+{
+
+   _delay_us(SPI_SEND_DELAY);
+   set_LCD(outTask);
+   _delay_us(SPI_SEND_DELAY);
+}
 
 /*
 uint8_t set_SR_595(uint8_t outData)

@@ -52,8 +52,9 @@
 
 
 // SPI-commands
-#define LCD_PUTC        0x01
-#define LCD_GOTOXY      0x02
+#define CHAR_TASK        0x01 // char senden, 2 bytes hex
+
+#define GOTO_TASK       0x02 // goto senden, 2 bytes hex (col, line kombiniert)
 
 
 /* number of columns on the display */
