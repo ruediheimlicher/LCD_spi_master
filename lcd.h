@@ -55,7 +55,7 @@
 #define CHAR_TASK        0x01 // char senden, 2 bytes hex
 
 #define GOTO_TASK       0x02 // goto senden, 2 bytes hex (col, line kombiniert)
-
+#define STRING_TASK     0x03 // string senden bis \0
 
 /* number of columns on the display */
 #define LCD_COLS 20

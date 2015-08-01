@@ -14,6 +14,7 @@
 //#include <avr/sleep.h>
 #include <inttypes.h>
 //#include <avr/wdt.h>
+#include <string.h>
 
 #include "lcd.c"
 
@@ -395,6 +396,7 @@ void main (void)
             lcd_puthex(goto_pos);
             lcd_putc(' ');
             
+            
             // kontrolle
             char buffer[8]={};
             itoa(goto_pos, buffer,16);
@@ -404,7 +406,7 @@ void main (void)
             lcd_putc(' ');
            
             // back-Kontrolle
-            
+            /*
              char* ptr;
              uint8_t wert=strtol((char*)buffer,&ptr,16);
              lcd_gotoxy(0,3);
@@ -419,15 +421,15 @@ void main (void)
              
              //lcd_putc(' ');
              //lcd_putc(wert);
+            */
             
-            
-            //set_LCD(0x0D);// CR //
-            //_delay_us(SPI_SEND_DELAY);
+            set_LCD(0x0D);// CR //
+            _delay_us(SPI_SEND_DELAY);
             
             
             set_LCD_task(GOTO_TASK); //
             //_delay_us(SPI_SEND_DELAY);
-
+            
             set_LCD_data(goto_pos);
             //_delay_us(SPI_SEND_DELAY);
 
@@ -439,28 +441,46 @@ void main (void)
             //_delay_us(SPI_SEND_DELAY);
 
             
-            // neues paket: string
             
-            /*
+            // neues paket: string
+            // string aufbauen
+            char stringbuffer[20]={};
+            uint8_t stringpos=0;
             for (i=0;i<8;i++)
             {
                char c ='A'+ i+(blinkcount & 0x0F);
-               lcd_putc(c);
-               //
-               set_LCD(CHAR_TASK);
-               //_delay_us(2);
-               set_LCD(c);
-               
+               stringbuffer[stringpos++] = c;
             }
-             
-            blinkcount++;
-             
-             */
+            stringbuffer[stringpos] = '\0';
+            
+            lcd_gotoxy(0,3);
+            
+            lcd_puts(stringbuffer);
+            
+            //blinkcount++;
+            lcd_putc(' ');
+            uint8_t l = strlen(stringbuffer);
+            
+            lcd_puthex(l);
+           
+            
+            set_LCD(0x0D);// CR //
+            _delay_us(SPI_SEND_DELAY);
+            
+            set_LCD_task(STRING_TASK); //
+            _delay_us(SPI_SEND_DELAY);
+            OSZILO;
+            set_LCD_data(l);
+            OSZIHI;
+            set_LCD_string(stringbuffer);
+            set_LCD(0);
+            
 
             //blinkcount++;
             //delay_ms(2);
             //lcd_gotoxy(12,0);
             //lcd_putint(blinkcount);
+            
          }
          
       }

@@ -23,7 +23,7 @@ volatile uint8_t			spistatus=0;
 #define TEENSY_RECV  6
 #define WHILEMAX 0xFFFF // Wartezeit in while-Schleife : 5 ms
 
-#define SPI_DELAY 5
+#define SPI_DELAY 1
 
 //http://www.ermicro.com/blog/?p=1050
 // MCP23S17 Registers Definition for BANK=0 (default)
@@ -113,7 +113,7 @@ void spi_master_init (void)
    //SPCR |= (1<<SPR0);               // div 16 SPI2X: div 8
    SPCR |= (1<<SPR1);               // div 64 SPI2X: div 32
    //SPCR |= (1<<SPR1) | (1<<SPR0);   // div 128 SPI2X: div 64
-  // SPCR0 |= (1<<SPI2X0);
+   //SPCR |= (1<<SPI2X);
    
    SPCR |= (1<<SPE); // Enable SPI
    status = SPSR;								//Status loeschen
@@ -298,7 +298,7 @@ void set_LCD_data(uint8_t outData)
    
    char buffer[5]={};
    itoa(outData, buffer,16);
-
+   _delay_us(SPI_SEND_DELAY);
    set_LCD(buffer[0]);
    _delay_us(SPI_SEND_DELAY);
    set_LCD(buffer[1]);
@@ -308,11 +308,27 @@ void set_LCD_data(uint8_t outData)
 
 void set_LCD_task(uint8_t outTask)
 {
-
    _delay_us(SPI_SEND_DELAY);
    set_LCD(outTask);
    _delay_us(SPI_SEND_DELAY);
 }
+
+
+void set_LCD_string(char* outString)
+{
+   uint8_t stringpos=0;
+   //set_LCD(strlen(outString));
+   _delay_us(SPI_SEND_DELAY);
+
+   while (outString[stringpos])
+   {
+      _delay_us(SPI_SEND_DELAY);
+      set_LCD(outString[stringpos++]);
+      _delay_us(SPI_SEND_DELAY);
+   }
+}
+
+
 
 /*
 uint8_t set_SR_595(uint8_t outData)
