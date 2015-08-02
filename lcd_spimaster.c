@@ -355,37 +355,40 @@ void main (void)
             lcd_gotoxy(0,0);
             lcd_putint(poscounter);
             
-            
             lcd_gotoxy(0,1);
             lcd_puts("char ");
             
              // neues Paket data
-            set_LCD(0x0D);// CR //
+   //         set_LCD(0x0D);// CR //
             //_delay_us(SPI_SEND_DELAY);
             
-            set_LCD_task(CHAR_TASK); //
+  //          set_LCD_task(CHAR_TASK); //
             //_delay_us(SPI_SEND_DELAY);
             
-            char c ='A'+ i+(blinkcount++ & 0x0F);
+            char c ='0'+(blinkcount++ );
+            if (blinkcount == 74)
+            {
+               blinkcount=0;
+            }
             lcd_putc(c);
 
-            set_LCD_data(c);
+   //         set_LCD_data(c);
             //_delay_us(SPI_SEND_DELAY);
             
             
             // ende paket data
             //_delay_us(SPI_SEND_DELAY);
-            set_LCD(0);
+           // set_LCD(0);
             //_delay_us(SPI_SEND_DELAY);
 
             
             
             // neues Paket: goto
-            uint8_t line = 3; // line <=3
-            uint8_t col = 19;
+            uint8_t line = 2; // line <=3
+            uint8_t col = 0;
             
             // pos auf LCD
-            int goto_pos = (col <<3) | (line & 0x07); // 5 bit col, 3 bit line
+            uint8_t goto_pos = (col <<3) | (line & 0x07); // 5 bit col, 3 bit line
             lcd_gotoxy(0,2);
             lcd_puts("goto ");
             
@@ -405,6 +408,7 @@ void main (void)
             lcd_puthex(buffer[1]);
             lcd_putc(' ');
            
+ 
             // back-Kontrolle
             /*
              char* ptr;
@@ -422,48 +426,57 @@ void main (void)
              //lcd_putc(' ');
              //lcd_putc(wert);
             */
+            //spi_lcd_gotoxy(col, line);
+            //spi_lcd_gotoxy(3, 1);
+            
+           
+            /*
             
             set_LCD(0x0D);// CR //
             _delay_us(SPI_SEND_DELAY);
-            
-            
             set_LCD_task(GOTO_TASK); //
             //_delay_us(SPI_SEND_DELAY);
             
             set_LCD_data(goto_pos);
             //_delay_us(SPI_SEND_DELAY);
-
-            
-            
             // ende paket goto
             //_delay_us(SPI_SEND_DELAY);
             set_LCD(0);
             //_delay_us(SPI_SEND_DELAY);
-
+            */
             
+            
+            spi_lcd_gotoxy(col,line);
+            
+            //spi_lcd_gotoxy(1,2);
+            spi_lcd_putc(c);
             
             // neues paket: string
             // string aufbauen
             char stringbuffer[20]={};
             uint8_t stringpos=0;
-            for (i=0;i<8;i++)
+            for (i=0;i<4;i++)
             {
                char c ='A'+ i+(blinkcount & 0x0F);
                stringbuffer[stringpos++] = c;
             }
             stringbuffer[stringpos] = '\0';
             
-            lcd_gotoxy(0,3);
+            //lcd_gotoxy(0,3);
             
-            lcd_puts(stringbuffer);
+            //lcd_puts(stringbuffer);
             
             //blinkcount++;
             lcd_putc(' ');
             uint8_t l = strlen(stringbuffer);
             
             lcd_puthex(l);
-           
-            
+            /*
+            spi_lcd_gotoxy(col,line);
+            //spi_lcd_putc(c);
+            spi_lcd_puts(stringbuffer);
+            */
+            /*
             set_LCD(0x0D);// CR //
             _delay_us(SPI_SEND_DELAY);
             
@@ -474,7 +487,8 @@ void main (void)
             OSZIHI;
             set_LCD_string(stringbuffer);
             set_LCD(0);
-            
+            */
+ //           spi_lcd_puts(stringbuffer);
 
             //blinkcount++;
             //delay_ms(2);

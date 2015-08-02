@@ -287,6 +287,7 @@ uint8_t set_LCD(uint8_t outData)
    return SPDR0;
 }
 
+
 void set_LCD_data(uint8_t outData)
 {
    //OSZITOG;
@@ -328,7 +329,53 @@ void set_LCD_string(char* outString)
    }
 }
 
+void spi_lcd_puts(char* outString)
+{
+   uint8_t l = strlen(outString);
+   set_LCD(0x0D);// CR //
+   _delay_us(SPI_SEND_DELAY);
+   
+   set_LCD_task(STRING_TASK); //
+   _delay_us(SPI_SEND_DELAY);
+   OSZILO;
+   set_LCD_data(l);
+   OSZIHI;
+   set_LCD_string(outString);
+   set_LCD(0);
 
+}
+
+void spi_lcd_putc(uint8_t outChar)
+{
+   set_LCD(0x0D);// CR //
+   _delay_us(SPI_SEND_DELAY);
+    set_LCD_task(CHAR_TASK); //
+   //_delay_us(SPI_SEND_DELAY);
+   set_LCD_data(outChar);
+   //_delay_us(SPI_SEND_DELAY);
+   
+   //_delay_us(SPI_SEND_DELAY);
+   set_LCD(0);
+   //_delay_us(SPI_SEND_DELAY);
+}
+
+void spi_lcd_gotoxy(uint8_t x, uint8_t y)
+{
+   uint8_t goto_pos = (x <<3) | (y & 0x07); // 5 bit col, 3 bit line
+
+   set_LCD(0x0D);// CR //
+   _delay_us(SPI_SEND_DELAY);
+   set_LCD_task(GOTO_TASK); //
+   //_delay_us(SPI_SEND_DELAY);
+   
+   set_LCD_data(goto_pos);
+   //_delay_us(SPI_SEND_DELAY);
+   // ende paket goto
+   //_delay_us(SPI_SEND_DELAY);
+   set_LCD(0);
+   //_delay_us(SPI_SEND_DELAY);
+   
+}/* lcd_gotoxy */
 
 /*
 uint8_t set_SR_595(uint8_t outData)
