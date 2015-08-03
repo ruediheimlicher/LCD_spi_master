@@ -476,7 +476,7 @@ void r_itoa(int32_t zahl, char* string)
   }
 }
 */
- /*
+
 void r_itoa16(int16_t zahl, char* string) 
 {
   uint8_t i;
@@ -493,7 +493,7 @@ void r_itoa16(int16_t zahl, char* string)
     zahl /= 10;
   }
 }
-*/
+
 
 
 /*
@@ -547,6 +547,144 @@ uint8_t frac  : Anzahl der Nachkommastellen
 	lcd_puts(string);
 }
 
+void lcd_put_zeit(uint8_t minuten, uint8_t stunden)
+{
+   //							13:15
+   int8_t i;
+   if (stunden< 10)
+   {
+      //	lcd_putc(' ');
+   }
+   
+   char zeitString[6];
+   zeitString[5]='\0';
+   
+   //	Minuten einsetzen
+   zeitString[4]=(minuten % 10) +'0';	//hinterste Stelle
+   if (minuten>9)
+   {
+      minuten/=10;
+      zeitString[3]=(minuten % 10) +'0';
+   }
+   else
+   {
+      zeitString[3]='0';
+   }
+   
+   zeitString[2]=':';
+   
+   //	Stunden einsetzen
+   zeitString[1]=(stunden % 10) +'0';
+   if (stunden>9)
+   {
+      stunden/=10;
+      zeitString[0]=(stunden % 10) +'0';
+   }
+   else
+   {
+      zeitString[0]='0';
+   }
+   
+   
+   lcd_puts(zeitString);
+}
+
+void lcd_put_temperatur(uint16_t temperatur)
+{
+   // Nullpunkt bei 127. Anzeige: 127 + doppelter Wert der Temperatur
+   char buffer[8]={};
+   uint16_t temp=(temperatur-127)*5;
+   //		uint16_t temp=temperatur;
+   
+   //		itoa(temp, buffer,10);
+   r_itoa16(temp,buffer);
+   //lcd_puts(buffer);
+   //		lcd_putc(' * ');
+   
+   char outstring[8]={};
+   
+   outstring[7]='\0';
+   outstring[6]=0xDF;
+   outstring[5]=buffer[6];
+   outstring[4]='.';
+   outstring[3]=buffer[5];
+   if (abs(temp)<100)
+   {
+      outstring[2]=' ';
+      outstring[1]=' ';
+   }
+   else if (abs(temp)<1000)
+   {
+      outstring[2]=buffer[4];
+      outstring[1]=' ';
+      
+   }
+   else
+   {
+      outstring[2]=buffer[4];
+      outstring[1]=buffer[3];
+      
+   }
+   
+   outstring[0]=buffer[0];
+   /*
+    if (temp<100)
+    {
+    lcd_putc(' ');
+    }
+    if (temp<10)
+    {
+    lcd_putc(' ');
+    }
+    */
+   lcd_puts(outstring);
+   
+}
+
+
+void lcd_put_tempbis99(uint16_t temperatur)
+{
+   // Temperatur mit doppeltem Wert angeben. Eingabe < 199 (99.5¡)
+   char buffer[7]={};
+   //		uint16_t temp=(temperatur-127)*5;
+   uint16_t temp=temperatur*5;
+   
+   //		itoa(temp, buffer,10);
+   r_itoa16(temp,buffer);
+   //		lcd_puts(buffer);
+   //		lcd_putc(' * ');
+   
+   char outstring[7]={};
+   
+   outstring[6]='\0';
+   outstring[5]=0xDF;
+   outstring[4]=buffer[6];
+   outstring[3]='.';
+   outstring[2]=buffer[5];
+   if (abs(temp)<100)
+   {
+      outstring[1]=' ';
+      
+   }
+   else
+   {
+      outstring[1]=buffer[4];
+      
+   }
+   outstring[0]=buffer[0];
+   /*
+    if (temp<100)
+    {
+    lcd_putc(' ');
+    }
+    if (temp<10)
+    {
+    lcd_putc(' ');
+    }
+    */	
+   lcd_puts(outstring);
+   
+}
 
 
  /*

@@ -51,19 +51,77 @@ ISR (SPI_STC_vect)
 }
 
 /*
-ISR (TIMER1_OVF_vect)
-{						//Senderoutine
-	if (count == 1) {
-		master_transmit ('1');
-		count--;
-		return;
-	}
-	if (count == 0) {
-		master_transmit ('0');
-		count++;
-	}
+ 
+ Funktion zur Umwandlung einer vorzeichenlosen 32 Bit Zahl in einen String
+ 
+ */
+
+void r_uitoa(uint32_t zahl, char* string) {
+   int8_t i;                             // schleifenzähler
+   
+   string[10]='\0';                       // String Terminator
+   for(i=9; i>=0; i--) {
+      string[i]=(zahl % 10) +'0';         // Modulo rechnen, dann den ASCII-Code von '0' addieren
+      zahl /= 10;
+   }
 }
-*/
+
+
+/*
+ 
+ Funktion zur Umwandlung einer vorzeichenbehafteten 32 Bit Zahl in einen String
+ 
+ */
+
+void r_itoa(int32_t zahl, char* string)
+{
+   uint8_t i;
+   
+   string[11]='\0';                  // String Terminator
+   if( zahl < 0 ) {                  // ist die Zahl negativ?
+      string[0] = '-';
+      zahl = -zahl;
+   }
+   else string[0] = ' ';             // Zahl ist positiv
+   
+   for(i=10; i>=1; i--) {
+      string[i]=(zahl % 10) +'0';     // Modulo rechnen, dann den ASCII-Code von '0' addieren
+      zahl /= 10;
+   }
+}
+
+void spi_r_itoa16(int16_t zahl, char* string)
+{
+   uint8_t i;
+   int16_t original=zahl;
+   string[7]='\0';                  // String Terminator
+   if( zahl < 0 ) {                  // ist die Zahl negativ?
+      string[0] = '-';
+      zahl = -zahl;
+   }
+   else string[0] = ' ';             // Zahl ist positiv
+   
+   for(i=6; i>=1; i--)
+   {
+      string[i]=(zahl % 10) +'0';     // Modulo rechnen, dann den ASCII-Code von '0' addieren
+      zahl /= 10;
+   }
+   if (abs(original) < 1000)
+   {
+      string[1]= ' ';
+   }
+   if (abs(original) < 100)
+   {
+      string[2]= ' ';
+   }
+   if (abs(original) < 10)
+   {
+      string[3]= ' ';
+   }
+   
+}
+
+
 
 void spi_master_init (void)
 {
@@ -269,7 +327,6 @@ uint8_t  get_SR(uint8_t outData)
 
 uint8_t set_LCD(uint8_t outData)
 {
-   //OSZITOG;
    LCD_SS_LO;
    _delay_us(SPI_DELAY);
   // _delay_ms(2);
@@ -279,16 +336,13 @@ uint8_t set_LCD(uint8_t outData)
    {
       spiwaitcounter++;
    }
-   
-   //SPCR0 &= ~(1<<CPOL0);
-   //uint8_t in = SPDR0;
    _delay_us(SPI_DELAY);
    LCD_SS_HI;
-   return SPDR0;
+   return SPDR;
 }
 
 
-void set_LCD_data(uint8_t outData)
+void set_LCD_data(uint8_t outData) // 180us
 {
    //OSZITOG;
    
@@ -296,18 +350,18 @@ void set_LCD_data(uint8_t outData)
    //char array[2]={};
    //array[0] = outData >> 8;
    //array[1] = outData & 0xff;
-   
+
    char buffer[5]={};
    itoa(outData, buffer,16);
-   _delay_us(SPI_SEND_DELAY);
+   //_delay_us(SPI_SEND_DELAY);
    set_LCD(buffer[0]);
-   _delay_us(SPI_SEND_DELAY);
+   //_delay_us(SPI_SEND_DELAY);
    set_LCD(buffer[1]);
-   _delay_us(SPI_SEND_DELAY);
+   //_delay_us(SPI_SEND_DELAY);
    
 }
 
-void set_LCD_task(uint8_t outTask)
+void set_LCD_task(uint8_t outTask) // 80us
 {
    _delay_us(SPI_SEND_DELAY);
    set_LCD(outTask);
@@ -321,7 +375,8 @@ void set_LCD_string(char* outString)
    //set_LCD(strlen(outString));
    _delay_us(SPI_SEND_DELAY);
 
-   while (outString[stringpos])
+   //while (!(outString[stringpos]=='\0'))
+   while ((outString[stringpos]))
    {
       _delay_us(SPI_SEND_DELAY);
       set_LCD(outString[stringpos++]);
@@ -336,16 +391,18 @@ void spi_lcd_puts(char* outString)
    _delay_us(SPI_SEND_DELAY);
    
    set_LCD_task(STRING_TASK); //
+   
    _delay_us(SPI_SEND_DELAY);
-   OSZILO;
+  
    set_LCD_data(l);
-   OSZIHI;
+   
    set_LCD_string(outString);
+   
    set_LCD(0);
 
 }
 
-void spi_lcd_putc(uint8_t outChar)
+void spi_lcd_putc(uint8_t outChar) // 400us
 {
    set_LCD(0x0D);// CR //
    _delay_us(SPI_SEND_DELAY);
@@ -359,23 +416,373 @@ void spi_lcd_putc(uint8_t outChar)
    //_delay_us(SPI_SEND_DELAY);
 }
 
-void spi_lcd_gotoxy(uint8_t x, uint8_t y)
+
+
+
+void spi_lcd_gotoxy2(uint8_t x, uint8_t y)
 {
    uint8_t goto_pos = (x <<3) | (y & 0x07); // 5 bit col, 3 bit line
-
+   
    set_LCD(0x0D);// CR //
    _delay_us(SPI_SEND_DELAY);
-   set_LCD_task(GOTO_TASK); //
+   set_LCD_task(NEW_TASK); //
    //_delay_us(SPI_SEND_DELAY);
    
-   set_LCD_data(goto_pos);
+   // Numerische Werte muessen als char gesendet werden
+   set_LCD_data(goto_pos+'0');
    //_delay_us(SPI_SEND_DELAY);
    // ende paket goto
    //_delay_us(SPI_SEND_DELAY);
    set_LCD(0);
    //_delay_us(SPI_SEND_DELAY);
    
+}//lcd_gotoxy
+
+// neue Version mit 4 bytes
+void spi_lcd_gotoxy(uint8_t x, uint8_t y)
+{
+   
+   set_LCD(0x0D);// CR //
+   _delay_us(SPI_SEND_DELAY);
+   set_LCD_task(GOTO_TASK); //
+   //_delay_us(SPI_SEND_DELAY);
+   
+   // Numerische Werte muessen als char gesendet werden
+   
+   set_LCD_data(x+'0');
+   _delay_us(SPI_SEND_DELAY);
+   
+   set_LCD_data(y+'0');
+   // ende paket goto
+   //_delay_us(SPI_SEND_DELAY);
+   set_LCD(0);
+   //_delay_us(SPI_SEND_DELAY);
+   
 }/* lcd_gotoxy */
+
+void spi_lcd_putint(uint8_t zahl)
+{
+   char string[4];
+   int8_t i;                             // schleifenzähler
+   
+   string[3]='\0';                       // String Terminator
+   for(i=2; i>=0; i--)
+   {
+      string[i]=(zahl % 10) +'0';         // Modulo rechnen, dann den ASCII-Code von '0' addieren
+      zahl /= 10;
+   }
+   spi_lcd_puts(string);
+}
+
+void spi_lcd_putint2(uint8_t zahl)	//zweistellige Zahl
+{
+   char string[3];
+   int8_t i;								// Schleifenzähler
+   zahl%=100;								// 2 hintere Stelle
+   //  string[4]='\0';                     // String Terminator
+   string[2]='\0';							// String Terminator
+   for(i=1; i>=0; i--) {
+      string[i]=(zahl % 10) +'0';         // Modulo rechnen, dann den ASCII-Code von '0' addieren
+      zahl /= 10;
+   }
+   spi_lcd_puts(string);
+}
+
+void spi_lcd_puthex(uint8_t zahl)
+{
+   //char string[5];
+   char string[3];
+   uint8_t l,h;                          // schleifenzähler
+   
+   string[2]='\0';                       // String Terminator
+   l=(zahl % 16);
+   if (l<10)
+      string[1]=l +'0';
+   else
+   {
+      l%=10;
+      string[1]=l + 'A';
+      
+   }
+   zahl /=16;
+   h= zahl % 16;
+   if (h<10)
+      string[0]=h +'0';
+   else
+   {
+      h%=10;
+      string[0]=h + 'A'; 
+   }
+   
+   
+   spi_lcd_puts(string);
+}
+
+void spi_lcd_putint1(uint8_t zahl)	//einstellige Zahl
+{
+   //char string[5];
+   char string[2];
+   zahl%=10;								//  hinterste Stelle
+   string[1]='\0';							// String Terminator
+   string[0]=zahl +'0';         // Modulo rechnen, dann den ASCII-Code von '0' addieren
+   spi_lcd_puts(string);
+}
+
+void spi_lcd_putsignedint(int8_t zahl)
+{
+   char string[5];
+   int8_t i;                             // schleifenzähler
+   
+   string[4]='\0';                       // String Terminator
+   
+   if (zahl<0)
+   {
+      string[0] = '-';
+      zahl *= (-1);
+   }
+   else
+   {
+      string[0] = '+';
+   }
+   zahl &= 0x7F;
+   for(i=3; i>0; i--)
+   {
+      string[i]=(zahl % 10) +'0';         // Modulo rechnen, dann den ASCII-Code von '0' addieren
+      zahl /= 10;
+   }
+   spi_lcd_puts(string);
+}
+
+
+
+void spi_lcd_putint12(uint16_t zahl)
+{
+   char string[5];
+   int8_t i;                             // schleifenzähler
+   
+   string[4]='\0';                       // String Terminator
+   for(i=3; i>=0; i--)
+   {
+      string[i]=(zahl % 10) +'0';         // Modulo rechnen, dann den ASCII-Code von '0' addieren
+      zahl /= 10;
+   }
+   spi_lcd_puts(string);
+}
+
+
+void spi_lcd_put_frac(char* string, uint8_t start, uint8_t komma, uint8_t frac)
+{
+   
+   uint8_t i;            // Zähler
+   uint8_t flag=0;       // Merker für führende Nullen
+   
+   // Vorzeichen ausgeben
+   if (string[0]=='-') lcd_putc('-'); else lcd_putc(' ');
+   
+   // Vorkommastellen ohne führende Nullen ausgeben
+   for(i=start; i;i--) {
+      if (flag==1 || string[i]!='0') {
+         lcd_putc(string[i]);
+         flag = 1;
+      }
+      else lcd_putc(' ');         // Leerzeichen
+   }
+   
+   lcd_putc('.');                // Komma ausgeben
+   
+   // Nachkommastellen ausgeben
+   for(; i<(komma+frac); i++) lcd_putc(string[i]);
+   
+}
+
+void spi_lcd_put_zeit(uint8_t minuten, uint8_t stunden)
+{
+   //							13:15
+   int8_t i;
+   if (stunden< 10)
+   {
+      //	lcd_putc(' ');
+   }
+   char zeitString[6]={};
+   zeitString[5]='\0';
+   
+   //	Minuten einsetzen
+   zeitString[4]=(minuten % 10) +'0';	//hinterste Stelle
+   if (minuten>9)
+   {
+      minuten/=10;
+      zeitString[3]=(minuten % 10) +'0';
+   }
+   else
+   {
+      zeitString[3]='0';
+   }
+   
+   zeitString[2]=':';
+   
+   //	Stunden einsetzen
+   zeitString[1]=(stunden % 10) +'0';
+   if (stunden>9)
+   {
+      stunden/=10;
+      zeitString[0]=(stunden % 10) +'0';
+   }
+   else
+   {
+      zeitString[0]='0';
+   }
+   spi_lcd_puts(zeitString);
+}
+
+void spi_lcd_put_wochentag(uint8_t wd)
+{
+   char* wochentag[] = {"MO","DI","MI","DO","FR","SA","SO"};
+   
+   spi_lcd_puts(wochentag[wd-1]);	// Array wochentag ist null-basiert
+}
+
+void spi_lcd_put_temperatur(uint16_t temperatur)
+{
+   char buffer[8]={};
+   //uint16_t temp=(temperatur-127)*5;
+   uint16_t temp=temperatur*5;
+   //		uint16_t temp=temperatur;
+   //lcd_gotoxy(0,1);
+   //lcd_putint16(temp);
+
+   //		itoa(temp, buffer,10);
+   r_itoa16(temp,buffer);
+   //		lcd_putc(' * ');
+   
+   char outstring[8]={};
+   
+   outstring[7]='\0';
+   outstring[6]=0xDF;
+   outstring[5]=buffer[6];
+   outstring[4]='.';
+   outstring[3]=buffer[5];
+   if (abs(temp)<100)
+   {
+      outstring[2]=' ';
+      outstring[1]=' ';
+   }
+   else if (abs(temp)<1000)
+   {
+      outstring[2]=buffer[4];
+      outstring[1]=' ';
+      
+   }
+   else
+   {
+      outstring[2]=buffer[4];
+      outstring[1]=buffer[3];
+      
+   }
+   
+   outstring[0]=buffer[0];
+   /*
+    if (temp<100)
+    {
+    lcd_putc(' ');
+    }
+    if (temp<10)
+    {
+    lcd_putc(' ');
+    }
+    */
+   spi_lcd_puts(outstring);
+   
+}
+
+
+void spi_lcd_put_tempbis99(uint16_t temperatur)
+{
+
+   char buffer[7]={};//' ',' ',' ',' ',' ',' ',' '};
+   //uint16_t temp=(temperatur-127)*5;
+   //lcd_gotoxy(0,1);
+   //lcd_puts("t:\0");
+   //lcd_putint((uint8_t) temperatur);
+   uint16_t temp=(temperatur)*5;
+   char temperaturstring[7]={};
+   
+   //lcd_puts("T:\0");
+   //spi_lcd_putint12(temp);
+   
+   //		uint16_t temp=temperatur;
+   //temp = 1334;
+   
+   //spi_lcd_putint12(temp);
+   //spi_lcd_putc('*');
+
+   //itoa(temp, buffer,10);
+   itoa(temp, temperaturstring,10);
+   
+   //spi_lcd_puts(temperaturstring);
+   //spi_lcd_putc('*');
+
+   
+   uint8_t l=strlen(temperaturstring);
+   
+//   spi_lcd_putint2(l);
+   //spi_lcd_putc('l');
+   char last[2];
+   last[0] = temperaturstring[l-1];
+   last[1] = '\0';
+   //spi_lcd_puts(last);
+
+   
+   char vorkommateil[7];
+   memset(vorkommateil, '\0', sizeof(vorkommateil));
+   
+   strncpy(vorkommateil,temperaturstring,l-1);
+   strcat(vorkommateil,".\0");
+   strcat(vorkommateil,last);
+   //strupr(buffer);
+   //spi_lcd_putc('v');
+   spi_lcd_puts(vorkommateil);
+//spi_lcd_putc('+');
+   return;
+   
+   
+   
+   
+  
+   //temperaturstring[5]=0xDF;
+   temperaturstring[5]='C';
+   temperaturstring[4]=buffer[6];
+   
+   temperaturstring[3]='.';
+   temperaturstring[2]=buffer[5];
+   /*
+  if (abs(temp)<100)
+   {
+      temperaturstring[1]=' ';
+      
+   }
+   else 
+   {
+      temperaturstring[1]=buffer[4];
+      
+   }		
+   */
+   temperaturstring[1]=buffer[4];
+   temperaturstring[0]=buffer[0];
+   //temperaturstring[6]='\0';
+   /*
+   outstring[5]='x';
+   outstring[4]=buffer[3];
+   outstring[3]='.';
+   outstring[2]=buffer[2];
+   outstring[1]=buffer[1];
+   outstring[0]=buffer[0];
+*/
+   //spi_lcd_puts(buffer);
+   spi_lcd_putc('*');
+   //strcpy(temperaturstring,"asdfghjkl\0");
+   spi_lcd_puts(temperaturstring);
+   //spi_lcd_puts("asdfghjkl");
+}
 
 /*
 uint8_t set_SR_595(uint8_t outData)

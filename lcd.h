@@ -56,9 +56,14 @@
 
 #define GOTO_TASK       0x02 // goto senden, 2 bytes hex (col, line kombiniert)
 #define STRING_TASK     0x03 // string senden bis \0
+#define UINT8_TASK   4
+#define UINT16_TASK  5
+
 
 #define DATA_TASK       0x06  // data an display senden
 #define CMD_TASK        0x07  // cmd an display senden
+#define END_TASK    6
+#define NEW_TASK    7
 /* number of columns on the display */
 #define LCD_COLS        20
 

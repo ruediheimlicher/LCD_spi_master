@@ -46,36 +46,6 @@ volatile    uint8_t masterstatus=0;
 
 void delay_ms(unsigned int ms);
 
-void r_itoa16(int16_t zahl, char* string)
-{
-   uint8_t i;
-   int16_t original=zahl;
-   string[7]='\0';                  // String Terminator
-   if( zahl < 0 ) {                  // ist die Zahl negativ?
-      string[0] = '-';
-      zahl = -zahl;
-   }
-   else string[0] = ' ';             // Zahl ist positiv
-   
-   for(i=6; i>=1; i--)
-   {
-      string[i]=(zahl % 10) +'0';     // Modulo rechnen, dann den ASCII-Code von '0' addieren
-      zahl /= 10;
-   }
-   if (abs(original) < 1000)
-   {
-      string[1]= ' ';
-   }
-  if (abs(original) < 100)
-   {
-      string[2]= ' ';
-   }
-   if (abs(original) < 10)
-   {
-      string[3]= ' ';
-   }
-
-}
 void r_itoa12(int16_t zahl, char* string)
 {
    uint8_t i;
@@ -294,7 +264,7 @@ ISR(TIMER0_OVF_vect)
 
 
 
-void main (void) 
+int main (void)
 {
    MCUSR = 0;
 	//wdt_disable();
@@ -359,11 +329,6 @@ void main (void)
             lcd_puts("char ");
             
              // neues Paket data
-   //         set_LCD(0x0D);// CR //
-            //_delay_us(SPI_SEND_DELAY);
-            
-  //          set_LCD_task(CHAR_TASK); //
-            //_delay_us(SPI_SEND_DELAY);
             
             char c ='0'+(blinkcount++ );
             if (blinkcount == 74)
@@ -371,130 +336,90 @@ void main (void)
                blinkcount=0;
             }
             lcd_putc(c);
-
-   //         set_LCD_data(c);
-            //_delay_us(SPI_SEND_DELAY);
-            
-            
-            // ende paket data
-            //_delay_us(SPI_SEND_DELAY);
-           // set_LCD(0);
-            //_delay_us(SPI_SEND_DELAY);
-
-            
             
             // neues Paket: goto
-            uint8_t line = 2; // line <=3
-            uint8_t col = 0;
+            uint8_t line = 1; // line <=3
+            uint8_t col = 1;
             
-            // pos auf LCD
-            uint8_t goto_pos = (col <<3) | (line & 0x07); // 5 bit col, 3 bit line
-            lcd_gotoxy(0,2);
-            lcd_puts("goto ");
-            
+            lcd_putc(' ');
             lcd_puthex(col);
             lcd_putc(' ');
             lcd_puthex(line);
             lcd_putc(' ');
-            lcd_puthex(goto_pos);
-            lcd_putc(' ');
-            
-            
-            // kontrolle
-            char buffer[8]={};
-            itoa(goto_pos, buffer,16);
-            lcd_puthex(buffer[0]);
-            //lcd_putc(' ');
-            lcd_puthex(buffer[1]);
-            lcd_putc(' ');
-           
  
-            // back-Kontrolle
-            /*
-             char* ptr;
-             uint8_t wert=strtol((char*)buffer,&ptr,16);
-             lcd_gotoxy(0,3);
-             lcd_puthex(wert);
-             
-             line = wert & 0x07;   // 5 bit col, 3 bit line
-             col = (wert & 0xF8)>>3;
-             lcd_putc(' ');
-             lcd_puthex(col);
-             lcd_putc(' ');
-             lcd_puthex(line);
-             
-             //lcd_putc(' ');
-             //lcd_putc(wert);
-            */
-            //spi_lcd_gotoxy(col, line);
-            //spi_lcd_gotoxy(3, 1);
-            
-           
-            /*
-            
-            set_LCD(0x0D);// CR //
-            _delay_us(SPI_SEND_DELAY);
-            set_LCD_task(GOTO_TASK); //
-            //_delay_us(SPI_SEND_DELAY);
-            
-            set_LCD_data(goto_pos);
-            //_delay_us(SPI_SEND_DELAY);
-            // ende paket goto
-            //_delay_us(SPI_SEND_DELAY);
-            set_LCD(0);
-            //_delay_us(SPI_SEND_DELAY);
-            */
-            
-            
             spi_lcd_gotoxy(col,line);
-            
-            //spi_lcd_gotoxy(1,2);
             spi_lcd_putc(c);
             
             // neues paket: string
             // string aufbauen
             char stringbuffer[20]={};
             uint8_t stringpos=0;
-            for (i=0;i<4;i++)
+            for (i=0;i<8;i++)
             {
                char c ='A'+ i+(blinkcount & 0x0F);
                stringbuffer[stringpos++] = c;
             }
-            stringbuffer[stringpos] = '\0';
+            stringbuffer[stringpos] = '\0'; // terminieren!
             
-            //lcd_gotoxy(0,3);
+ 
+            spi_lcd_gotoxy(5,1);
             
-            //lcd_puts(stringbuffer);
+            spi_lcd_puts("Ende\0");
+            spi_lcd_putc('!');
+            spi_lcd_gotoxy(1,3);
             
-            //blinkcount++;
-            lcd_putc(' ');
-            uint8_t l = strlen(stringbuffer);
-            
-            lcd_puthex(l);
-            /*
-            spi_lcd_gotoxy(col,line);
-            //spi_lcd_putc(c);
-            spi_lcd_puts(stringbuffer);
-            */
-            /*
-            set_LCD(0x0D);// CR //
-            _delay_us(SPI_SEND_DELAY);
-            
-            set_LCD_task(STRING_TASK); //
-            _delay_us(SPI_SEND_DELAY);
+            //for (i=0;i<4;i++)
+            {
             OSZILO;
-            set_LCD_data(l);
+            spi_lcd_puts(stringbuffer);
             OSZIHI;
-            set_LCD_string(stringbuffer);
-            set_LCD(0);
-            */
- //           spi_lcd_puts(stringbuffer);
-
-            //blinkcount++;
-            //delay_ms(2);
-            //lcd_gotoxy(12,0);
-            //lcd_putint(blinkcount);
+               _delay_us(2);
+            }
+            spi_lcd_gotoxy(1,2);
             
+            //spi_lcd_putc('*');
+  
+
+            uint8_t newline = 0;
+            uint8_t newcol=1;
+            
+            uint8_t goto_pos = ((newcol <<3) | (newline & 0x07)); // 5 bit col, 3 bit line
+            
+            
+            lcd_gotoxy(0,3);
+      //OSZILO;
+            lcd_puts(stringbuffer);
+ //OSZIHI;
+            lcd_puthex(goto_pos);
+     
+            lcd_putc(' ');
+            
+            lcd_putc(goto_pos);
+            
+            // Kontrolle:
+            // Uebertragung als char, Wert groesser als '0'
+            //goto_pos += '0';
+            
+ 
+            // abschicken
+            // col, line werden als char geschickt, '0' wird in gotoxy addiert
+            
+            lcd_gotoxy(4,0);
+            
+            lcd_put_tempbis99(164);
+            
+            spi_lcd_gotoxy2(newcol,newline);
+            
+            spi_lcd_putc('*');
+            
+            
+            
+            spi_lcd_put_tempbis99(164);
+            
+            spi_lcd_putc('*');
+            
+            //spi_lcd_puthex(goto_pos);
+             
          }
          
       }
