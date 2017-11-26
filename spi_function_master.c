@@ -176,8 +176,6 @@ void spi_master_init (void)
    SPCR |= (1<<SPE); // Enable SPI
    status = SPSR;								//Status loeschen
    
-   
-   
 }
 
 void spi_master_restore(void)
@@ -325,6 +323,8 @@ uint8_t  get_SR(uint8_t outData)
    
 }
 
+
+
 uint8_t set_LCD(uint8_t outData)
 {
    LCD_SS_LO;
@@ -340,6 +340,56 @@ uint8_t set_LCD(uint8_t outData)
    LCD_SS_HI;
    return SPDR;
 }
+
+uint8_t set_LCD_first(uint8_t outData) // erstes Byte, SS LO
+{
+   LCD_SS_LO;
+   _delay_us(SPI_DELAY);
+   // _delay_ms(2);
+   SPDR = outData;
+   spiwaitcounter=0;
+   while(!(SPSR & (1<<SPIF)) )//&& spiwaitcounter < WHILEMAX)
+   {
+      spiwaitcounter++;
+   }
+   _delay_us(SPI_DELAY);
+   //LCD_SS_HI;
+   return SPDR;
+}
+
+uint8_t set_LCD_inner(uint8_t outData) // inneres Byte, SS nicht veraendert
+{
+   //LCD_SS_LO;
+   _delay_us(SPI_DELAY);
+   // _delay_ms(2);
+   SPDR = outData;
+   spiwaitcounter=0;
+   while(!(SPSR & (1<<SPIF)) )//&& spiwaitcounter < WHILEMAX)
+   {
+      spiwaitcounter++;
+   }
+   _delay_us(SPI_DELAY);
+   //LCD_SS_HI;
+   return SPDR;
+}
+
+
+uint8_t set_LCD_last(uint8_t outData) // letztes Byte, SS HI
+{
+   //LCD_SS_LO;
+   _delay_us(SPI_DELAY);
+   // _delay_ms(2);
+   SPDR = outData;
+   spiwaitcounter=0;
+   while(!(SPSR & (1<<SPIF)) )//&& spiwaitcounter < WHILEMAX)
+   {
+      spiwaitcounter++;
+   }
+   _delay_us(SPI_DELAY);
+   LCD_SS_HI;
+   return SPDR;
+}
+
 
 
 void set_LCD_data(uint8_t outData) // 180us
@@ -384,27 +434,47 @@ void set_LCD_string(char* outString)
    }
 }
 
+void set_LCD_string2(char* outString)
+{
+   uint8_t stringpos=0;
+   //set_LCD(strlen(outString));
+   _delay_us(SPI_SEND_DELAY);
+   
+   //while (!(outString[stringpos]=='\0'))
+   set_LCD_first(outString[stringpos++]);
+   _delay_us(SPI_SEND_DELAY);
+
+   while ((outString[stringpos]))
+   {
+      _delay_us(SPI_SEND_DELAY);
+      set_LCD_inner(outString[stringpos++]);
+      _delay_us(SPI_SEND_DELAY);
+   }
+   set_LCD_last(0);
+}
+
 void spi_lcd_puts(char* outString)
 {
    uint8_t l = strlen(outString);
-   set_LCD(0x0D);// CR //
+   set_LCD(START_TASK);// CR //
    _delay_us(SPI_SEND_DELAY);
    
    set_LCD_task(STRING_TASK); //
    
    _delay_us(SPI_SEND_DELAY);
-  
-   set_LCD_data(l);
    
-   set_LCD_string(outString);
+   set_LCD_data(l); // strlen senden
+   
+   set_LCD_string2(outString);
    
    set_LCD(0);
+   
 
 }
 
 void spi_lcd_putc(uint8_t outChar) // 400us
 {
-   set_LCD(0x0D);// CR //
+   set_LCD(START_TASK);// CR //
    _delay_us(SPI_SEND_DELAY);
     set_LCD_task(CHAR_TASK); //
    //_delay_us(SPI_SEND_DELAY);
@@ -423,7 +493,7 @@ void spi_lcd_gotoxy2(uint8_t x, uint8_t y)
 {
    uint8_t goto_pos = (x <<3) | (y & 0x07); // 5 bit col, 3 bit line
    
-   set_LCD(0x0D);// CR //
+   set_LCD(START_TASK);// CR //
    _delay_us(SPI_SEND_DELAY);
    set_LCD_task(NEW_TASK); //
    //_delay_us(SPI_SEND_DELAY);
@@ -442,7 +512,7 @@ void spi_lcd_gotoxy2(uint8_t x, uint8_t y)
 void spi_lcd_gotoxy(uint8_t x, uint8_t y)
 {
    
-   set_LCD(0x0D);// CR //
+   set_LCD(START_TASK);// CR //
    _delay_us(SPI_SEND_DELAY);
    set_LCD_task(GOTO_TASK); //
    //_delay_us(SPI_SEND_DELAY);

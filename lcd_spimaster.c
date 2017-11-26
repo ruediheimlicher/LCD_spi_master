@@ -279,7 +279,7 @@ int main (void)
 	lcd_initialize(LCD_FUNCTION_8x2, LCD_CMD_ENTRY_INC, LCD_CMD_ON);
 
 	lcd_puts("Guten Tag\0");
-	delay_ms(1000);
+	delay_ms(200);
 	lcd_cls();
 	lcd_puts("SPI_Master\0");
 	
@@ -293,7 +293,7 @@ int main (void)
 	//uint8_t twierrcount=0;
 	//LOOPLEDPORT |=(1<<LOOPLED);
 	
-	delay_ms(1000);
+	delay_ms(200);
 
 	lcd_clr_line(0);
    timer0();
@@ -318,7 +318,7 @@ int main (void)
          //delay_ms(10);
          //PORTD ^= (1<<4);
          loopcount1++;
-         if ((loopcount1 >4) )
+         if ((loopcount1 >8) )
          {
             poscounter++;;
             loopcount1=0;
@@ -335,11 +335,12 @@ int main (void)
             {
                blinkcount=0;
             }
+            
             lcd_putc(c);
             
             // neues Paket: goto
             uint8_t line = 1; // line <=3
-            uint8_t col = 1;
+            uint8_t col = 2;
             
             lcd_putc(' ');
             lcd_puthex(col);
@@ -360,28 +361,26 @@ int main (void)
                stringbuffer[stringpos++] = c;
             }
             stringbuffer[stringpos] = '\0'; // terminieren!
-            
  
             spi_lcd_gotoxy(5,1);
             
-            spi_lcd_puts("Ende\0");
+            spi_lcd_puts("Ende");
             spi_lcd_putc('!');
             spi_lcd_gotoxy(1,3);
             
-            //for (i=0;i<4;i++)
             {
             OSZILO;
             spi_lcd_puts(stringbuffer);
             OSZIHI;
-               _delay_us(2);
+             //  _delay_us(2);
             }
             spi_lcd_gotoxy(1,2);
             
-            //spi_lcd_putc('*');
+            spi_lcd_putc('*');
   
 
             uint8_t newline = 0;
-            uint8_t newcol=1;
+            uint8_t newcol=3;
             
             uint8_t goto_pos = ((newcol <<3) | (newline & 0x07)); // 5 bit col, 3 bit line
             
@@ -390,11 +389,12 @@ int main (void)
       //OSZILO;
             lcd_puts(stringbuffer);
  //OSZIHI;
+             lcd_putc(' ');
             lcd_puthex(goto_pos);
      
-            lcd_putc(' ');
+            //lcd_putc(' ');
             
-            lcd_putc(goto_pos);
+            //lcd_putc(goto_pos);
             
             // Kontrolle:
             // Uebertragung als char, Wert groesser als '0'
@@ -410,11 +410,11 @@ int main (void)
             
             spi_lcd_gotoxy2(newcol,newline);
             
-            spi_lcd_putc('*');
+            //spi_lcd_putc('*');
             
             
             
-            spi_lcd_put_tempbis99(164);
+            spi_lcd_put_tempbis99(161);
             
             spi_lcd_putc('*');
             

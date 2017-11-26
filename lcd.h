@@ -33,13 +33,13 @@
 #include <inttypes.h>
 
 /* AVR port and pins connected to '164 and/or LCD */
-#define LCD_PORT                PORTC
-#define LCD_DDR                DDRC
+#define LCD_PORT                PORTD
+#define LCD_DDR                DDRD
 
 //	defines fuer Slave:
-#define LCD_RSDS_PIN            3
-#define LCD_ENABLE_PIN          4
-#define LCD_CLOCK_PIN           5
+#define LCD_RSDS_PIN            5
+#define LCD_ENABLE_PIN          6
+#define LCD_CLOCK_PIN           7
 
 //	defines fuer mySlave:
 //#define LCD_RSDS_PIN            3
@@ -56,8 +56,9 @@
 
 #define GOTO_TASK       0x02 // goto senden, 2 bytes hex (col, line kombiniert)
 #define STRING_TASK     0x03 // string senden bis \0
-#define UINT8_TASK   4
-#define UINT16_TASK  5
+#define START_TASK          0x0D // CR, neues Paket
+#define UINT8_TASK      4
+#define UINT16_TASK     5
 
 
 #define DATA_TASK       0x06  // data an display senden
@@ -76,7 +77,7 @@
 #define LCD_CMD_CLEAR           0x01    /* clear, cursor home */
 #define LCD_CMD_OFF             0x08    /* display off */
 #define LCD_CMD_ON              0x0C    /* display on, cursor off */
-#define LCD_CMD_ON_BLINK        0x0D    /* display on, cursor off, blink char */
+#define LCD_CMD_ON_BLINK        START    /* display on, cursor off, blink char */
 #define LCD_CMD_ON_CURSOR       0x0E    /* display on, cursor on */
 #define LCD_CMD_ON_CURSOR_BLINK 0x0F    /* display on, cursor on, blink char */
 #define LCD_CMD_CURSOR_LEFT     0x10    /* decrement cursor (left) */
