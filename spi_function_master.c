@@ -168,10 +168,10 @@ void spi_master_init (void)
     1       1        1     fosc/64
     */
    
-   //SPCR |= (1<<SPR0);               // div 16 SPI2X: div 8
-   SPCR |= (1<<SPR1);               // div 64 SPI2X: div 32
+   SPCR |= (1<<SPR0);               // div 16 SPI2X: div 8
+   //SPCR |= (1<<SPR1);               // div 64 SPI2X: div 32
    //SPCR |= (1<<SPR1) | (1<<SPR0);   // div 128 SPI2X: div 64
-   //SPCR |= (1<<SPI2X);
+   SPCR |= (1<<SPI2X);
    
    SPCR |= (1<<SPE); // Enable SPI
    status = SPSR;								//Status loeschen
@@ -421,7 +421,7 @@ void set_LCD_task(uint8_t outTask) // 80us
 
 void set_LCD_string(char* outString)
 {
-   uint8_t stringpos=0;
+   uint16_t stringpos=0;
    //set_LCD(strlen(outString));
    _delay_us(SPI_SEND_DELAY);
 
@@ -430,33 +430,56 @@ void set_LCD_string(char* outString)
    {
       _delay_us(SPI_SEND_DELAY);
       set_LCD(outString[stringpos++]);
+      
       _delay_us(SPI_SEND_DELAY);
    }
 }
 
-void set_LCD_string2(char* outString)
+uint8_t set_LCD_string_ret(char* outString)
 {
-   uint8_t stringpos=0;
+   uint16_t stringpos=0;
+   uint8_t ret = 0;
    //set_LCD(strlen(outString));
    _delay_us(SPI_SEND_DELAY);
    
    //while (!(outString[stringpos]=='\0'))
-   set_LCD_first(outString[stringpos++]);
+   while ((outString[stringpos]))
+   {
+      _delay_us(SPI_SEND_DELAY);
+      ret = set_LCD(outString[stringpos++]);
+      
+      _delay_us(SPI_SEND_DELAY);
+   }
+   return ret;
+}
+
+
+void set_LCD_string2(char* outString)
+{
+   uint16_t stringpos=0;
+   //set_LCD(strlen(outString));
+   _delay_us(SPI_SEND_DELAY);
+   
+   //while (!(outString[stringpos]=='\0'))
+   set_LCD_first(outString[stringpos++]); // SS LO
    _delay_us(SPI_SEND_DELAY);
 
    while ((outString[stringpos]))
    {
       _delay_us(SPI_SEND_DELAY);
       set_LCD_inner(outString[stringpos++]);
+      
       _delay_us(SPI_SEND_DELAY);
+      
    }
-   set_LCD_last(0);
+   set_LCD_last(0); // SS HI
+   
 }
 
 void spi_lcd_puts(char* outString)
 {
    uint8_t l = strlen(outString);
-   set_LCD(START_TASK);// CR //
+   set_LCD(0x0D);// CR //
    _delay_us(SPI_SEND_DELAY);
    
    set_LCD_task(STRING_TASK); //
@@ -466,10 +489,8 @@ void spi_lcd_puts(char* outString)
    set_LCD_data(l); // strlen senden
    
    set_LCD_string2(outString);
-   
-   set_LCD(0);
-   
-
+   _delay_us(SPI_SEND_DELAY);
+   //set_LCD(0);
 }
 
 void spi_lcd_putc(uint8_t outChar) // 400us
@@ -482,11 +503,14 @@ void spi_lcd_putc(uint8_t outChar) // 400us
    //_delay_us(SPI_SEND_DELAY);
    
    //_delay_us(SPI_SEND_DELAY);
-   set_LCD(0);
+   //set_LCD(0);
    //_delay_us(SPI_SEND_DELAY);
 }
 
-
+void spi_lcd_clear(void)
+{
+   set_LCD(CLEAR_LCD);
+}
 
 
 void spi_lcd_gotoxy2(uint8_t x, uint8_t y)

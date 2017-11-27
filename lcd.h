@@ -59,7 +59,7 @@
 #define START_TASK          0x0D // CR, neues Paket
 #define UINT8_TASK      4
 #define UINT16_TASK     5
-
+#define CLEAR_LCD       0x0A
 
 #define DATA_TASK       0x06  // data an display senden
 #define CMD_TASK        0x07  // cmd an display senden

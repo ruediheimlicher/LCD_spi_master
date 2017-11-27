@@ -303,6 +303,7 @@ int main (void)
    sei();
    uint8_t i=0;
    uint8_t poscounter=0;
+   uint16_t control=0;
 	while (1)
    {
       // PORTD |= (1<<0);
@@ -318,8 +319,10 @@ int main (void)
          //delay_ms(10);
          //PORTD ^= (1<<4);
          loopcount1++;
-         if ((loopcount1 >8) )
+         if ((loopcount1 >4) )
          {
+            //lcd_cls();
+            //delay_ms(500);
             poscounter++;;
             loopcount1=0;
             lcd_gotoxy(0,0);
@@ -331,26 +334,36 @@ int main (void)
              // neues Paket data
             
             char c ='0'+(blinkcount++ );
-            if (blinkcount == 74)
+            if (blinkcount == 77)
             {
                blinkcount=0;
             }
             
             lcd_putc(c);
+            lcd_putc(' ');
+            lcd_puthex(c);
             
             // neues Paket: goto
             uint8_t line = 1; // line <=3
-            uint8_t col = 2;
+            uint8_t col = 0;
             
             lcd_putc(' ');
             lcd_puthex(col);
             lcd_putc(' ');
             lcd_puthex(line);
             lcd_putc(' ');
- 
-            spi_lcd_gotoxy(col,line);
-            spi_lcd_putc(c);
             
+            
+            spi_lcd_gotoxy(col,line);
+            //OSZILO;
+            spi_lcd_putc(c);
+            //OSZIHI;
+            spi_lcd_putc('*');
+            spi_lcd_puts("asdfghj");//asdfghjhg");
+            //lcd_putc(' ');
+            //spi_lcd_puts("StartStartStart");
+            //spi_lcd_puts("Start");
+            //spi_lcd_putc('$');
             // neues paket: string
             // string aufbauen
             char stringbuffer[20]={};
@@ -360,23 +373,34 @@ int main (void)
                char c ='A'+ i+(blinkcount & 0x0F);
                stringbuffer[stringpos++] = c;
             }
-            stringbuffer[stringpos] = '\0'; // terminieren!
- 
-            spi_lcd_gotoxy(5,1);
+            //stringbuffer[stringpos] = '\0'; // terminieren!
+            //uint8_t l = strlen(stringbuffer);
+            //lcd_putc('l');
+            //lcd_puthex(l);
             
-            spi_lcd_puts("Ende");
-            spi_lcd_putc('!');
-            spi_lcd_gotoxy(1,3);
+            //delay_ms(1);
+            //spi_lcd_gotoxy(16,1);
             
+            //spi_lcd_puts("Ende");
+            //spi_lcd_putc('!');
+            spi_lcd_gotoxy(0,3);
+            
+
             {
             OSZILO;
+               spi_lcd_putc('*'); // 150 us
+               OSZIHI;
             spi_lcd_puts(stringbuffer);
-            OSZIHI;
-             //  _delay_us(2);
-            }
-            spi_lcd_gotoxy(1,2);
+               spi_lcd_putc('*');
+               spi_lcd_puts(stringbuffer);
+               spi_lcd_putc('*');
+
             
-            spi_lcd_putc('*');
+            //_delay_us(200);
+            }
+            //spi_lcd_gotoxy(1,2);
+            
+            //spi_lcd_putc('*');
   
 
             uint8_t newline = 0;
@@ -410,16 +434,19 @@ int main (void)
             
             spi_lcd_gotoxy2(newcol,newline);
             
-            //spi_lcd_putc('*');
-            
-            
-            
+            spi_lcd_putc('*');
             spi_lcd_put_tempbis99(161);
-            
+            //spi_lcd_gotoxy2(newcol+6,newline);
+            //_delay_us(100);
             spi_lcd_putc('*');
             
             //spi_lcd_puthex(goto_pos);
-             
+            spi_lcd_gotoxy2(4,2);
+            spi_lcd_puthex(++control);
+            spi_lcd_putc('*');
+            spi_lcd_putint(control);
+            spi_lcd_putc('*');
+            spi_lcd_putint12(control);
          }
          
       }
