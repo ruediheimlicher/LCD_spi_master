@@ -39,7 +39,7 @@ volatile uint8_t			spistatus=0;
 uint16_t spiwaitcounter = WHILEMAX; // 5 ms
 
 extern volatile uint8_t arraypos;
-
+extern volatile uint8_t head;
 
 void timer1 (void);
 void master_init (void);
@@ -472,7 +472,7 @@ void set_LCD_string2(char* outString)
       _delay_us(SPI_SEND_DELAY);
       
    }
-   set_LCD_last(0); // SS HI
+  head =  set_LCD_last(0); // SS HI
    
 }
 
@@ -495,17 +495,39 @@ void spi_lcd_puts(char* outString)
 
 void spi_lcd_putc(uint8_t outChar) // 400us
 {
-   set_LCD(START_TASK);// CR //
+   set_LCD(START_TASK);// CR   1 byte
    _delay_us(SPI_SEND_DELAY);
-    set_LCD_task(CHAR_TASK); //
+   set_LCD_task(CHAR_TASK); // 1 byte
    //_delay_us(SPI_SEND_DELAY);
-   set_LCD_data(outChar);
+   set_LCD_data(outChar);   // 2 bytes
    //_delay_us(SPI_SEND_DELAY);
    
    //_delay_us(SPI_SEND_DELAY);
    //set_LCD(0);
    //_delay_us(SPI_SEND_DELAY);
 }
+
+void spi_lcd_puts2(char* outString)
+{
+   register char c;
+   uint8_t l = strlen(outString);
+   set_LCD(0x0D);// CR //
+   _delay_us(SPI_SEND_DELAY);
+   
+   set_LCD_task(STRING_TASK); //
+   
+   _delay_us(SPI_SEND_DELAY);
+   
+   set_LCD_data(l); // strlen senden
+   
+   while ( (c = *outString++) ) {
+      spi_lcd_putc(c);
+   }
+
+   _delay_us(SPI_SEND_DELAY);
+   //set_LCD(0);
+}
+
 
 void spi_lcd_clear(void)
 {
@@ -532,10 +554,10 @@ void spi_lcd_gotoxy2(uint8_t x, uint8_t y)
    
 }//lcd_gotoxy
 
+
 // neue Version mit 4 bytes
 void spi_lcd_gotoxy(uint8_t x, uint8_t y)
-{
-   
+{   
    set_LCD(START_TASK);// CR //
    _delay_us(SPI_SEND_DELAY);
    set_LCD_task(GOTO_TASK); //
@@ -553,6 +575,16 @@ void spi_lcd_gotoxy(uint8_t x, uint8_t y)
    //_delay_us(SPI_SEND_DELAY);
    
 }/* lcd_gotoxy */
+
+void spi_lcd_clrline(uint8_t linie)
+{
+   uint8_t pos;
+   for (pos=0;pos < 20;pos++)
+   {
+      spi_lcd_gotoxy(pos, linie);
+      spi_lcd_putc('-');
+   }
+}
 
 void spi_lcd_putint(uint8_t zahl)
 {

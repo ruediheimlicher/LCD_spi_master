@@ -56,7 +56,7 @@
 
 #define GOTO_TASK       0x02 // goto senden, 2 bytes hex (col, line kombiniert)
 #define STRING_TASK     0x03 // string senden bis \0
-#define START_TASK          0x0D // CR, neues Paket
+#define START_TASK       0x0D // CR, neues Paket
 #define UINT8_TASK      4
 #define UINT16_TASK     5
 #define CLEAR_LCD       0x0A

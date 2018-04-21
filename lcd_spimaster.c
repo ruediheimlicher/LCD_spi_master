@@ -42,7 +42,7 @@ volatile    int16_t stellwert=0;
 volatile    uint8_t masterstatus=0;
 
 
-
+volatile uint8_t head=0;
 
 void delay_ms(unsigned int ms);
 
@@ -303,7 +303,10 @@ int main (void)
    sei();
    uint8_t i=0;
    uint8_t poscounter=0;
-   uint16_t control=0;
+   uint16_t control=2;
+   uint8_t newline = 2;
+   uint8_t newcol=0;
+   spi_lcd_clear();
 	while (1)
    {
       // PORTD |= (1<<0);
@@ -331,7 +334,7 @@ int main (void)
             lcd_gotoxy(0,1);
             lcd_puts("char ");
             
-             // neues Paket data
+            // neues Paket data
             
             char c ='0'+(blinkcount++ );
             if (blinkcount == 77)
@@ -353,10 +356,15 @@ int main (void)
             lcd_puthex(line);
             lcd_putc(' ');
             
+            spi_lcd_gotoxy(col,line);
+            //spi_lcd_putc('a' );
+            //spi_lcd_gotoxy(col,line+1);
+           // spi_lcd_puts("abcd");
+ 
             
             spi_lcd_gotoxy(col,line);
             //OSZILO;
-            spi_lcd_putc(c);
+            //spi_lcd_putc(c);
             //OSZIHI;
             spi_lcd_putc('*');
             spi_lcd_puts("asdfghj");//asdfghjhg");
@@ -383,39 +391,64 @@ int main (void)
             
             //spi_lcd_puts("Ende");
             //spi_lcd_putc('!');
-            spi_lcd_gotoxy(0,3);
+            spi_lcd_gotoxy(8,3);
             
-
-            {
+            
             OSZILO;
-               spi_lcd_putc('*'); // 150 us
-               OSZIHI;
+            spi_lcd_putc('*'); // 150 us
+            OSZIHI;
             spi_lcd_puts(stringbuffer);
-               spi_lcd_putc('*');
-               spi_lcd_puts(stringbuffer);
-               spi_lcd_putc('*');
-
+            spi_lcd_putc('*');
+            //spi_lcd_puts(stringbuffer);
+            //spi_lcd_putc('*');
+            
             
             //_delay_us(200);
-            }
+            
             //spi_lcd_gotoxy(1,2);
             
             //spi_lcd_putc('*');
-  
-
-            uint8_t newline = 0;
-            uint8_t newcol=3;
             
+            if (newcol < 12)
+            {
+               
+               spi_lcd_gotoxy2(newcol,newline);
+               spi_lcd_putc(' ');
+               
+               
+               //spi_clrline(0);
+               newcol ++;
+               
+            }
+            else
+            {
+               //spi_lcd_clrline(3);
+               //spi_lcd_gotoxy2(15,3);
+               char c = ' ';
+               //spi_lcd_putc('+');spi_lcd_putc('+');spi_lcd_putc('+');spi_lcd_putc(c);spi_lcd_putc('+');
+
+               spi_lcd_gotoxy2(newcol,newline);
+               spi_lcd_puts2("    ");
+               //spi_lcd_putc(' ');spi_lcd_putc(' ');spi_lcd_putc(' ');spi_lcd_putc(' ');
+               newcol=2;
+               
+            }
+           
+             
             uint8_t goto_pos = ((newcol <<3) | (newline & 0x07)); // 5 bit col, 3 bit line
             
             
             lcd_gotoxy(0,3);
-      //OSZILO;
+            //OSZILO;
             lcd_puts(stringbuffer);
- //OSZIHI;
-             lcd_putc(' ');
+            //OSZIHI;
+            lcd_putc(' ');
             lcd_puthex(goto_pos);
-     
+            
+            lcd_putc(' ');
+            lcd_puthex(head);
+            
+            
             //lcd_putc(' ');
             
             //lcd_putc(goto_pos);
@@ -424,7 +457,7 @@ int main (void)
             // Uebertragung als char, Wert groesser als '0'
             //goto_pos += '0';
             
- 
+            
             // abschicken
             // col, line werden als char geschickt, '0' wird in gotoxy addiert
             
@@ -432,21 +465,24 @@ int main (void)
             
             lcd_put_tempbis99(164);
             
+            //spi_lcd_gotoxy2(0,0);
+            //spi_lcd_puts("                     \0");
             spi_lcd_gotoxy2(newcol,newline);
             
-            spi_lcd_putc('*');
-            spi_lcd_put_tempbis99(161);
+            //spi_lcd_putc('*');
+            
+            spi_lcd_put_tempbis99(159);
             //spi_lcd_gotoxy2(newcol+6,newline);
             //_delay_us(100);
-            spi_lcd_putc('*');
-            
-            //spi_lcd_puthex(goto_pos);
-            spi_lcd_gotoxy2(4,2);
+            //spi_lcd_putc('+');
+             //spi_lcd_puthex(goto_pos);
+            spi_lcd_gotoxy2(18,0);
             spi_lcd_puthex(++control);
-            spi_lcd_putc('*');
-            spi_lcd_putint(control);
-            spi_lcd_putc('*');
-            spi_lcd_putint12(control);
+            //spi_lcd_putc('*');
+            //spi_lcd_putint(control);
+            //spi_lcd_putc('*');
+            //spi_lcd_putint12(control);
+            
          }
          
       }
